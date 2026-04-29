@@ -26,7 +26,7 @@ public final class DemoWorldSeeder {
 
     public void seed(@Nonnull World world) {
         UUID worldUuid = world.getWorldConfig().getUuid();
-        if (worldUuid != null && !seededWorlds.add(worldUuid)) {
+        if (worldUuid != null && seededWorlds.contains(worldUuid)) {
             return;
         }
         Store<EntityStore> store = world.getEntityStore().getStore();
@@ -36,24 +36,32 @@ public final class DemoWorldSeeder {
             return;
         }
 
-        spawnRole(store, npcPlugin, "Cow", 4, -856.0, 134.0);
-        spawnRole(store, npcPlugin, "Chicken", 5, -850.0, 134.0);
-        spawnRole(store, npcPlugin, "Sheep", 3, -856.0, 140.0);
-        spawnRole(store, npcPlugin, "Fox", 2, -850.0, 140.0);
+        boolean seeded = true;
+        seeded &= spawnRole(store, npcPlugin, "Cow", 4, -856.0, 134.0);
+        seeded &= spawnRole(store, npcPlugin, "Chicken", 5, -850.0, 134.0);
+        seeded &= spawnRole(store, npcPlugin, "Sheep", 3, -856.0, 140.0);
+        seeded &= spawnRole(store, npcPlugin, "Fox", 2, -850.0, 140.0);
+        if (!seeded) {
+            logger.at(Level.WARNING).log("Animal Husbandry demo seeding did not complete in %s; retrying is still allowed.", world.getName());
+            return;
+        }
+        if (worldUuid != null) {
+            seededWorlds.add(worldUuid);
+        }
 
         logger.at(Level.INFO).log("Seeded Animal Husbandry demo world %s", world.getName());
     }
 
-    private void spawnRole(@Nonnull Store<EntityStore> store,
-                           @Nonnull NPCPlugin npcPlugin,
-                           @Nonnull String roleId,
-                           int count,
-                           double baseX,
-                           double baseZ) {
+    private boolean spawnRole(@Nonnull Store<EntityStore> store,
+                              @Nonnull NPCPlugin npcPlugin,
+                              @Nonnull String roleId,
+                              int count,
+                              double baseX,
+                              double baseZ) {
         int roleIndex = npcPlugin.getIndex(roleId);
         if (roleIndex < 0) {
             logger.at(Level.WARNING).log("Animal Husbandry demo role '%s' is not loaded; skipping.", roleId);
-            return;
+            return false;
         }
         for (int i = 0; i < count; i++) {
             double x = baseX + (i % 3) * 1.8;
@@ -63,8 +71,9 @@ public final class DemoWorldSeeder {
             Pair<Ref<EntityStore>, NPCEntity> spawned = npcPlugin.spawnEntity(store, roleIndex, position, rotation, null, null);
             if (spawned == null || spawned.first() == null) {
                 logger.at(Level.WARNING).log("Failed to spawn demo role '%s'.", roleId);
-                return;
+                return false;
             }
         }
+        return true;
     }
 }
