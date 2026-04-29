@@ -1,0 +1,50 @@
+{
+  "$Comment": "Lobby/demo-start tool. Primary interaction starts a private Animal Husbandry demo instance.",
+  "TranslationProperties": {
+    "Name": "server.items.AHDemo_Start_Item.name",
+    "Description": "server.items.AHDemo_Start_Item.description"
+  },
+  "Quality": "Tool",
+  "PlayerAnimationsId": "Item",
+  "Interactions": {
+    "Primary": {
+      "Interactions": [
+        {
+          "Type": "AHDemoStart"
+        }
+      ]
+    },
+    "Secondary": {
+      "Interactions": [
+        {
+          "Type": "AHDemoStart"
+        }
+      ]
+    }
+  },
+  "Categories": [
+    "Tool"
+  ],
+  "Tags": {
+    "Type": [
+      "Tool"
+    ]
+  },
+  "Tool": {},
+  "Model": "Items/Consumables/Recipes/Recipe.blockymodel",
+  "Texture": "Items/Consumables/Recipes/Recipe_Texture.png",
+  "Icon": "Icons/ItemsGenerated/AnimalHusbandry_Command_Item.png",
+  "IconProperties": {
+    "Scale": 0.76,
+    "Translation": [
+      -1,
+      5
+    ],
+    "Rotation": [
+      135,
+      135,
+      0
+    ]
+  },
+  "MaxStack": 1
+}

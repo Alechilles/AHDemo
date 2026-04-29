@@ -1,0 +1,62 @@
+{
+  "$Comment": "Disposable Animal Husbandry demo farm. Time acceleration is per-instance world time only; do not use World.setTps or global time dilation.",
+  "RequiredPlugins": {},
+  "ChunkStorage": {
+    "Type": "Hytale"
+  },
+  "GameMode": "Adventure",
+  "IsPvpEnabled": false,
+  "IsFallDamageEnabled": false,
+  "IsSpawningNPC": true,
+  "GameTime": "0001-01-01T07:00:00Z",
+  "DaytimeDurationSeconds": 105,
+  "NighttimeDurationSeconds": 15,
+  "UUID": {
+    "$binary": "AZKxiVAMQfWIS0qBsBfjzQ==",
+    "$type": "04"
+  },
+  "GameplayConfig": "Default",
+  "IsCompassUpdating": true,
+  "IsTicking": true,
+  "IsBlockTicking": true,
+  "IsGameTimePaused": false,
+  "IsObjectiveMarkersEnabled": false,
+  "IsAllNPCFrozen": false,
+  "IsSavingPlayers": false,
+  "IsSavingChunks": false,
+  "SaveNewChunks": false,
+  "IsUnloadingChunks": true,
+  "WorldGen": {
+    "Type": "HytaleGenerator",
+    "WorldStructure": "Default_Flat"
+  },
+  "SpawnProvider": {
+    "Id": "Global",
+    "SpawnPoint": {
+      "X": -849.48,
+      "Y": 123.45,
+      "Z": 130.13,
+      "Pitch": 0.0,
+      "Yaw": 0.0,
+      "Roll": 0.0
+    }
+  },
+  "IsSpawnMarkersEnabled": true,
+  "DeleteOnRemove": true,
+  "Plugin": {
+    "Instance": {
+      "RemovalConditions": [
+        {
+          "Type": "WorldEmpty",
+          "TimeoutSeconds": 10.0
+        },
+        {
+          "Type": "Timeout",
+          "TimeoutSeconds": 7200.0
+        }
+      ],
+      "PreventReconnection": true
+    }
+  },
+  "Version": 2
+}

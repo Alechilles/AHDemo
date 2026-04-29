@@ -1,0 +1,54 @@
+$C = "Common.ui";
+
+$C.@PageOverlay {
+  LayoutMode: Top;
+
+  Group #AhDemoTutorialHudRoot {
+    Anchor: (Top: 22, Right: 24, Width: 330, Height: 190);
+    LayoutMode: Top;
+    Background: #111927dd;
+    Padding: (Left: 12, Right: 12, Top: 10, Bottom: 10);
+
+    Label #AhDemoTutorialHudProgress {
+      Anchor: (Height: 18);
+      Text: "Step 1 of 7";
+      Style: (FontSize: 11, TextColor: #8fb8ff, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: false);
+    }
+
+    Label #AhDemoTutorialHudTitle {
+      Anchor: (Height: 26);
+      Text: "Welcome";
+      Style: (FontSize: 16, TextColor: #ffffff, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: false);
+    }
+
+    Label #AhDemoTutorialHudInstruction {
+      Anchor: (Height: 44);
+      Text: "";
+      Style: (FontSize: 12, TextColor: #d9e7f7, HorizontalAlignment: Start, VerticalAlignment: Start, Wrap: true);
+    }
+
+    Label #AhDemoTutorialHudTask0 {
+      Anchor: (Height: 22);
+      Text: "";
+      Style: (FontSize: 12, TextColor: #f1f6ff, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: true);
+    }
+
+    Label #AhDemoTutorialHudTask1 {
+      Anchor: (Height: 22);
+      Text: "";
+      Style: (FontSize: 12, TextColor: #f1f6ff, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: true);
+    }
+
+    Label #AhDemoTutorialHudTask2 {
+      Anchor: (Height: 22);
+      Text: "";
+      Style: (FontSize: 12, TextColor: #f1f6ff, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: true);
+    }
+
+    Label #AhDemoTutorialHudHint {
+      Anchor: (Height: 24);
+      Text: "Open Guide: /ahdemo tutorial";
+      Style: (FontSize: 11, TextColor: #b8c7d8, HorizontalAlignment: Start, VerticalAlignment: Center, Wrap: false);
+    }
+  }
+}
