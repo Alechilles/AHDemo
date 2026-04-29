@@ -16,8 +16,11 @@ if not exist "%WRAPPER_JAR%" (
     exit /b 1
 )
 
-@rem Use bundled JDK from Hytale Toolkit
-set JAVACMD=C:\Program Files\Eclipse Adoptium\jdk-25.0.1.8-hotspot\bin\java.exe
+if defined JAVA_HOME (
+    set "JAVACMD=%JAVA_HOME%\bin\java.exe"
+) else (
+    set "JAVACMD=java.exe"
+)
 
 set MAVEN_PROJECTBASEDIR=%BASEDIR%
 

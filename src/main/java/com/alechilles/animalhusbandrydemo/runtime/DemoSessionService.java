@@ -180,12 +180,13 @@ public final class DemoSessionService {
             startDemo(player, store, playerEntityRef, playerRef, currentWorld, sink);
             return;
         }
-        tutorialService.endSession(oldSession);
-        tutorialService.cleanupHud(player);
         if (!registry.markStarting(playerUuid)) {
+            registry.put(oldSession);
             sink.send("Your Animal Husbandry demo is already resetting.");
             return;
         }
+        tutorialService.endSession(oldSession);
+        tutorialService.cleanupHud(player);
 
         World originWorld = resolveOriginWorld(oldSession, currentWorld);
         Transform returnPoint = oldSession.getReturnPoint().clone();
