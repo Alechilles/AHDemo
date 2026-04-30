@@ -362,9 +362,10 @@ public final class DemoSessionService {
             Universe universe = Universe.get();
             World world = universe != null ? universe.getWorld(session.getInstanceWorldUuid()) : null;
             if (world == null || !world.isAlive()) {
-                registry.remove(session.getPlayerUuid(), session);
-                tutorialService.endSession(session);
-                emptySince.remove(session.getInstanceWorldUuid());
+                if (registry.remove(session.getPlayerUuid(), session)) {
+                    tutorialService.endSession(session);
+                    emptySince.remove(session.getInstanceWorldUuid());
+                }
                 continue;
             }
             world.execute(() -> checkWorldEmpty(session, world, Instant.now()));
