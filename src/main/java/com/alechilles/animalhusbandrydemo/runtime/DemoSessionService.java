@@ -45,6 +45,7 @@ public final class DemoSessionService {
     private final Map<UUID, Instant> emptySince = new ConcurrentHashMap<>();
     private final Map<UUID, Boolean> pendingAutoStarts = new ConcurrentHashMap<>();
     private ScheduledFuture<?> maintenanceTask;
+    private volatile boolean shuttingDown;
 
     public DemoSessionService(@Nonnull DemoLoadoutService loadoutService,
                               @Nonnull DemoWorldSeeder worldSeeder,
@@ -59,6 +60,7 @@ public final class DemoSessionService {
         if (maintenanceTask != null && !maintenanceTask.isCancelled()) {
             return;
         }
+        shuttingDown = false;
         tutorialService.start();
         maintenanceTask = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(
                 this::runMaintenance,
@@ -69,12 +71,14 @@ public final class DemoSessionService {
     }
 
     public void shutdown() {
+        shuttingDown = true;
         if (maintenanceTask != null) {
             maintenanceTask.cancel(false);
             maintenanceTask = null;
         }
         tutorialService.shutdown();
         for (DemoSession session : registry.sessions()) {
+            restoreTrackedInventory(session);
             requestInstanceRemoval(session);
         }
         registry.clear();
@@ -122,6 +126,11 @@ public final class DemoSessionService {
                 log(Level.SEVERE, throwable, "Failed to start Animal Husbandry demo for %s", playerUuid);
                 restoreOriginalInventory(originWorld, playerUuid, player, playerEntityRef, store);
                 sink.send("Unable to start the Animal Husbandry demo instance.");
+                return;
+            }
+            if (shuttingDown) {
+                restoreOriginalInventory(originWorld, playerUuid, player, playerEntityRef, store);
+                InstancesPlugin.safeRemoveInstance(instanceWorld.getWorldConfig().getUuid());
                 return;
             }
             DemoSession session = new DemoSession(
@@ -211,6 +220,14 @@ public final class DemoSessionService {
         InstancesPlugin.teleportPlayerToLoadingInstance(playerEntityRef, store, future, INSTANCE_ENTRY);
         future.whenComplete((instanceWorld, throwable) -> {
             registry.clearStarting(playerUuid);
+            if (shuttingDown) {
+                restoreOriginalInventory(currentWorld, playerUuid, player, playerEntityRef, store);
+                requestInstanceRemoval(oldSession);
+                if (instanceWorld != null) {
+                    InstancesPlugin.safeRemoveInstance(instanceWorld.getWorldConfig().getUuid());
+                }
+                return;
+            }
             if (throwable != null || instanceWorld == null) {
                 log(Level.SEVERE, throwable, "Failed to reset Animal Husbandry demo for %s", playerUuid);
                 registry.put(oldSession);
@@ -450,6 +467,25 @@ public final class DemoSessionService {
         if (session.markRemovalRequested()) {
             InstancesPlugin.safeRemoveInstance(session.getInstanceWorldUuid());
         }
+    }
+
+    private void restoreTrackedInventory(@Nonnull DemoSession session) {
+        Universe universe = Universe.get();
+        World world = universe != null ? universe.getWorld(session.getInstanceWorldUuid()) : null;
+        if (world == null || !world.isAlive()) {
+            loadoutService.restoreOriginalInventory(session.getPlayerUuid(), null, null, null, true);
+            return;
+        }
+        world.execute(() -> {
+            Ref<EntityStore> playerRef = world.getEntityRef(session.getPlayerUuid());
+            if (playerRef == null || !playerRef.isValid()) {
+                loadoutService.restoreOriginalInventory(session.getPlayerUuid(), null, null, null, true);
+                return;
+            }
+            Store<EntityStore> store = world.getEntityStore().getStore();
+            Player player = store.getComponent(playerRef, Player.getComponentType());
+            loadoutService.restoreOriginalInventory(session.getPlayerUuid(), player, playerRef, store, true);
+        });
     }
 
     private void restoreOriginalInventory(@Nonnull World world,
