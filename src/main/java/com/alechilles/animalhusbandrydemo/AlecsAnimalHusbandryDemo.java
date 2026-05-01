@@ -6,6 +6,7 @@ import com.alechilles.animalhusbandrydemo.interactions.AhDemoStartInteraction;
 import com.alechilles.animalhusbandrydemo.runtime.DemoLoadoutService;
 import com.alechilles.animalhusbandrydemo.runtime.DemoSessionService;
 import com.alechilles.animalhusbandrydemo.runtime.DemoWorldSeeder;
+import com.hypixel.hytale.server.core.event.events.player.PlayerConnectEvent;
 import com.hypixel.hytale.server.core.event.events.player.PlayerDisconnectEvent;
 import com.hypixel.hytale.server.core.modules.interaction.interaction.config.Interaction;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
@@ -46,6 +47,7 @@ public final class AlecsAnimalHusbandryDemo extends JavaPlugin {
         if (getCommandRegistry() != null) {
             getCommandRegistry().registerCommand(new AhDemoCommand(sessionService));
         }
+        getEventRegistry().registerGlobal(PlayerConnectEvent.class, this::onPlayerConnect);
         getEventRegistry().registerGlobal(PlayerDisconnectEvent.class, this::onPlayerDisconnect);
     }
 
@@ -55,6 +57,12 @@ public final class AlecsAnimalHusbandryDemo extends JavaPlugin {
             sessionService.startMaintenance();
         }
         getLogger().at(Level.INFO).log("Alec's Animal Husbandry Demo enabled.");
+    }
+
+    private void onPlayerConnect(@Nonnull PlayerConnectEvent event) {
+        if (sessionService != null && event.getPlayerRef() != null && event.getWorld() != null) {
+            sessionService.scheduleAutoStart(event.getPlayerRef(), event.getWorld());
+        }
     }
 
     @Override

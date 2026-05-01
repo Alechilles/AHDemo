@@ -32,6 +32,7 @@ public final class DemoSessionService {
     public static final Duration WORLD_EMPTY_GRACE = Duration.ofSeconds(10);
 
     private static final Transform INSTANCE_ENTRY = new Transform(-849.48, 123.45, 130.13, 0.0f, 0.0f, 0.0f);
+    private static final long AUTO_START_DELAY_SECONDS = 1L;
     private static final long INSTANCE_SEED_DELAY_SECONDS = 3L;
 
     private final DemoLoadoutService loadoutService;
@@ -225,6 +226,36 @@ public final class DemoSessionService {
             scheduleSeed(instanceWorld);
             sink.send("Animal Husbandry demo reset. A fresh private farm is ready.");
         });
+    }
+
+    public void scheduleAutoStart(@Nonnull PlayerRef playerRef, @Nonnull World originWorld) {
+        UUID playerUuid = playerRef.getUuid();
+        if (playerUuid == null || registry.get(playerUuid) != null || registry.isStarting(playerUuid)) {
+            return;
+        }
+        HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
+            if (!originWorld.isAlive()) {
+                return;
+            }
+            originWorld.execute(() -> autoStart(playerUuid, playerRef, originWorld));
+        }, AUTO_START_DELAY_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private void autoStart(@Nonnull UUID playerUuid, @Nonnull PlayerRef playerRef, @Nonnull World originWorld) {
+        if (registry.get(playerUuid) != null || registry.isStarting(playerUuid)) {
+            return;
+        }
+        Ref<EntityStore> playerEntityRef = originWorld.getEntityRef(playerUuid);
+        if (playerEntityRef == null || !playerEntityRef.isValid() || !playerRef.isValid()) {
+            return;
+        }
+        Store<EntityStore> store = originWorld.getEntityStore().getStore();
+        Player player = store.getComponent(playerEntityRef, Player.getComponentType());
+        if (player == null) {
+            return;
+        }
+        startDemo(player, store, playerEntityRef, playerRef, originWorld, message ->
+                logger.at(Level.FINE).log("Auto-start Animal Husbandry demo for %s: %s", playerUuid, message));
     }
 
     public void openTutorialGuide(@Nonnull Player player,
