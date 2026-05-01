@@ -76,11 +76,12 @@ public final class DemoSessionService {
             maintenanceTask.cancel(false);
             maintenanceTask = null;
         }
-        tutorialService.shutdown();
         for (DemoSession session : registry.sessions()) {
+            tutorialService.endSession(session);
             restoreTrackedInventory(session);
             requestInstanceRemoval(session);
         }
+        tutorialService.shutdown();
         registry.clear();
         pendingAutoStarts.clear();
         emptySince.clear();
@@ -162,6 +163,7 @@ public final class DemoSessionService {
             sink.send("Unable to leave demo: player UUID unavailable.");
             return;
         }
+        pendingAutoStarts.remove(playerUuid);
         DemoSession session = registry.remove(playerUuid);
         if (session != null) {
             tutorialService.endSession(session);
