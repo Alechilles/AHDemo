@@ -104,10 +104,16 @@ public final class DemoLoadoutService {
                                          @Nullable Ref<EntityStore> playerRef,
                                          @Nullable ComponentAccessor<EntityStore> accessor,
                                          boolean discardInventoryIfMissing) {
+        DemoInventorySnapshot snapshot = removeStash(playerUuid);
         if (player == null || player.getInventory() == null) {
+            if (snapshot != null && logger != null) {
+                logger.at(Level.WARNING).log(
+                        "Removed Animal Husbandry demo inventory stash for %s without restoring because player inventory was unavailable.",
+                        playerUuid
+                );
+            }
             return;
         }
-        DemoInventorySnapshot snapshot = removeStash(playerUuid);
         if (snapshot == null) {
             if (discardInventoryIfMissing) {
                 clearAll(player);

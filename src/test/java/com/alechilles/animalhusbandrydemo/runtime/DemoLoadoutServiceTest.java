@@ -4,6 +4,7 @@ import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.UUID;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -72,6 +73,21 @@ final class DemoLoadoutServiceTest {
         DemoLoadoutService loadoutService = new DemoLoadoutService(tempDir, null);
 
         assertFalse(loadoutService.hasStash(playerUuid));
+    }
+
+    @Test
+    void restoreRemovesStashEvenWhenPlayerUnavailable(@TempDir Path tempDir) throws Exception {
+        UUID playerUuid = UUID.randomUUID();
+        Path stashPath = tempDir.resolve(playerUuid + ".json");
+        BsonDocument stash = new BsonDocument();
+        stash.put("createdAt", new BsonString(Instant.now().toString()));
+        stash.put("containers", new BsonDocument());
+        Files.writeString(stashPath, stash.toJson());
+
+        DemoLoadoutService loadoutService = new DemoLoadoutService(tempDir, null);
+        loadoutService.restoreOriginalInventory(playerUuid, null, null, null);
+
+        assertFalse(Files.exists(stashPath));
     }
 
     private static BsonDocument metadata(String value) {
