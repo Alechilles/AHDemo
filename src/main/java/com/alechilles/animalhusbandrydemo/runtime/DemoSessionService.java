@@ -512,6 +512,7 @@ public final class DemoSessionService {
             if (Duration.between(session.getStartedAt(), now).compareTo(MAX_SESSION_LENGTH) >= 0) {
                 if (registry.remove(session.getPlayerUuid(), session)) {
                     tutorialService.endSession(session);
+                    restoreTrackedInventory(session);
                     requestInstanceRemoval(session);
                 }
                 continue;
