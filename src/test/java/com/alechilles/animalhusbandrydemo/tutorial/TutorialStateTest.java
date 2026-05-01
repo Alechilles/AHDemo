@@ -21,6 +21,19 @@ final class TutorialStateTest {
     }
 
     @Test
+    void resetCurrentModuleTimerDelaysIntroAutoAdvance() {
+        Instant start = Instant.parse("2026-04-29T00:00:00Z");
+        TutorialState state = new TutorialState(start);
+
+        state.resetCurrentModuleTimer(start.plusSeconds(10));
+        state.update(TutorialSnapshot.empty(), start.plusSeconds(14));
+        assertEquals(TutorialModule.INTRO, state.currentModule());
+
+        state.update(TutorialSnapshot.empty(), start.plusSeconds(16));
+        assertEquals(TutorialModule.TAME_LIVESTOCK, state.currentModule());
+    }
+
+    @Test
     void manualNavigationAndHudVisibilityAreTracked() {
         Instant start = Instant.parse("2026-04-29T00:00:00Z");
         TutorialState state = new TutorialState(start);

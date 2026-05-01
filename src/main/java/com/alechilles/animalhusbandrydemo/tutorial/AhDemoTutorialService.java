@@ -206,6 +206,9 @@ public final class AhDemoTutorialService {
         RuntimeState runtime = runtimeByPlayer.get(ownerUuid);
         if (runtime != null) {
             synchronized (runtime) {
+                if (!runtime.isPlayerVisible()) {
+                    return;
+                }
                 runtime.state.update(TutorialSnapshot.empty(), Instant.now());
             }
             refreshSessionHud(ownerUuid);
@@ -230,16 +233,21 @@ public final class AhDemoTutorialService {
         RuntimeState runtime = runtimeByPlayer.computeIfAbsent(session.getPlayerUuid(), ignored -> new RuntimeState(Instant.now()));
         Store<EntityStore> store = world.getEntityStore().getStore();
         Player player = resolvePlayer(world, session.getPlayerUuid());
+        if (player == null) {
+            return;
+        }
+        Instant now = Instant.now();
         TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), player, runtime);
         boolean changed;
         synchronized (runtime) {
+            runtime.markPlayerVisible(now);
             int previousModuleIndex = runtime.state.getModuleIndex();
-            changed = runtime.state.update(snapshot, Instant.now());
+            changed = runtime.state.update(snapshot, now);
             if (runtime.state.getModuleIndex() != previousModuleIndex) {
                 runtime.builder.reset();
             }
         }
-        if (player != null && (changed || runtime.isDirty())) {
+        if (changed || runtime.isDirty()) {
             refreshHud(player, player.getPlayerRef(), runtime);
         }
     }
@@ -254,6 +262,9 @@ public final class AhDemoTutorialService {
         RuntimeState runtime = runtimeByPlayer.get(session.getPlayerUuid());
         Player player = resolvePlayer(world, session.getPlayerUuid());
         if (runtime != null && player != null) {
+            synchronized (runtime) {
+                runtime.markPlayerVisible(Instant.now());
+            }
             refreshHud(player, player.getPlayerRef(), runtime);
         }
     }
@@ -468,6 +479,7 @@ public final class AhDemoTutorialService {
     private static final class RuntimeState {
         private final TutorialState state;
         private final TutorialSnapshotBuilder builder = new TutorialSnapshotBuilder();
+        private boolean playerVisible;
 
         private RuntimeState(@Nonnull Instant now) {
             this.state = new TutorialState(now);
@@ -475,6 +487,21 @@ public final class AhDemoTutorialService {
 
         private synchronized boolean isDirty() {
             return state.isDirty();
+        }
+
+        private boolean isPlayerVisible() {
+            return playerVisible;
+        }
+
+        private void markPlayerVisible(@Nonnull Instant now) {
+            if (playerVisible) {
+                return;
+            }
+            playerVisible = true;
+            if (state.currentModule() == TutorialModule.INTRO
+                    && !state.completedTasks().contains(TutorialTaskId.INTRO_READY)) {
+                state.resetCurrentModuleTimer(now);
+            }
         }
     }
 

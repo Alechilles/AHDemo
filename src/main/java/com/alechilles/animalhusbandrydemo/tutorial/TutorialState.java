@@ -96,6 +96,11 @@ public final class TutorialState {
         dirty = true;
     }
 
+    void resetCurrentModuleTimer(@Nonnull Instant now) {
+        moduleStartedAt = now;
+        dirty = true;
+    }
+
     public void setHudHidden(boolean hidden) {
         if (hudHidden != hidden) {
             hudHidden = hidden;
