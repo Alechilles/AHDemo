@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -41,6 +42,17 @@ final class DemoSessionRegistryTest {
 
         assertTrue(session.markRemovalRequested());
         assertFalse(session.markRemovalRequested());
+    }
+
+    @Test
+    void instanceNamesIncludePlayerAndNonceToAvoidResetCollisions() {
+        UUID playerUuid = UUID.fromString("4f0181d6-516c-4fd4-b366-f606d9bb864a");
+        String first = DemoSessionService.instanceName(playerUuid, UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"));
+        String second = DemoSessionService.instanceName(playerUuid, UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"));
+
+        assertTrue(first.startsWith("ahdemo-" + playerUuid + "-"));
+        assertTrue(second.startsWith("ahdemo-" + playerUuid + "-"));
+        assertNotEquals(first, second);
     }
 
     private DemoSession session(UUID playerUuid) {

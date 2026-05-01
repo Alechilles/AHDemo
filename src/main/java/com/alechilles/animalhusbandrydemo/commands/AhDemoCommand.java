@@ -39,10 +39,10 @@ public final class AhDemoCommand extends AbstractPlayerCommand {
         switch (action) {
             case "start" -> sessionService.startDemo(player, store, ref, playerRef, world, sink);
             case "leave" -> sessionService.leaveDemo(player, store, ref, playerRef, sink);
-            case "reset" -> sessionService.resetDemo(player, store, ref, playerRef, world, sink);
+            case "reset", "restart" -> sessionService.resetDemo(player, store, ref, playerRef, world, sink);
             case "status" -> sessionService.sendStatus(player, sink);
             case "tutorial" -> sessionService.openTutorialGuide(player, store, ref, playerRef, sink);
-            default -> commandContext.sendMessage(Message.raw("Usage: /ahdemo start | leave | reset | status | tutorial"));
+            default -> commandContext.sendMessage(Message.raw("Usage: /ahdemo start | leave | reset | restart | status | tutorial"));
         }
     }
 

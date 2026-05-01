@@ -202,13 +202,16 @@ public final class DemoSessionService {
         InstancesPlugin.teleportPlayerToLoadingInstance(playerEntityRef, store, future, INSTANCE_ENTRY);
         future.whenComplete((instanceWorld, throwable) -> {
             registry.clearStarting(playerUuid);
-            requestInstanceRemoval(oldSession);
             if (throwable != null || instanceWorld == null) {
                 log(Level.SEVERE, throwable, "Failed to reset Animal Husbandry demo for %s", playerUuid);
-                clearLoadout(originWorld, player);
+                registry.put(oldSession);
+                if (currentWorld.isAlive()) {
+                    tutorialService.startSession(oldSession, currentWorld);
+                }
                 sink.send("Unable to reset the Animal Husbandry demo instance.");
                 return;
             }
+            requestInstanceRemoval(oldSession);
             DemoSession session = new DemoSession(
                     playerUuid,
                     instanceWorld.getWorldConfig().getUuid(),
@@ -311,8 +314,13 @@ public final class DemoSessionService {
             sink.send("Unable to start demo: instance asset '" + INSTANCE_ASSET + "' is not loaded.");
             return null;
         }
-        String instanceName = "ahdemo-" + playerUuid;
+        String instanceName = instanceName(playerUuid, UUID.randomUUID());
         return instancesPlugin.spawnInstance(INSTANCE_ASSET, instanceName, originWorld, returnPoint);
+    }
+
+    @Nonnull
+    static String instanceName(@Nonnull UUID playerUuid, @Nonnull UUID nonce) {
+        return "ahdemo-" + playerUuid + "-" + nonce.toString().replace("-", "").substring(0, 12);
     }
 
     private Transform resolveReturnPoint(@Nonnull Player player) {
