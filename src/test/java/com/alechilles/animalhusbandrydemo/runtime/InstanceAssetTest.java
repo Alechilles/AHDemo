@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class InstanceAssetTest {
@@ -33,5 +34,14 @@ final class InstanceAssetTest {
         assertTrue(json.contains("\"Type\": \"Timeout\""));
         assertTrue(json.contains("\"TimeoutSeconds\": 7200.0"));
         assertTrue(Files.exists(asset.getParent().resolve("chunks").resolve("-1.0.region.bin")));
+    }
+
+    @Test
+    void manifestDoesNotHardDependOnAnimalHusbandryAssetPack() throws IOException {
+        String json = Files.readString(Path.of("src", "main", "resources", "manifest.json"));
+
+        assertTrue(json.contains("\"Hytale:Instances\": \"*\""));
+        assertTrue(json.contains("\"Alechilles:Alec's Tamework!\": \"2.8.x\""));
+        assertFalse(json.contains("\"Alechilles:Alec's Animal Husbandry!\""));
     }
 }
