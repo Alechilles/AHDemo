@@ -36,7 +36,8 @@ final class TutorialStateTest {
     @Test
     void farmBoundsRequireMovingPastSpawnPoint() {
         assertFalse(AhDemoTutorialService.isInsideFarm(new Vector3d(-849.48, 123.45, 130.13)));
-        assertTrue(AhDemoTutorialService.isInsideFarm(new Vector3d(-850.0, 123.45, 134.0)));
+        assertTrue(AhDemoTutorialService.isInsideFarm(new Vector3d(-849.48, 123.45, 128.0)));
+        assertTrue(AhDemoTutorialService.isInsideFarm(new Vector3d(-850.0, 80.0, 126.0)));
     }
 
     @Test

@@ -51,12 +51,10 @@ import javax.annotation.Nullable;
 
 public final class AhDemoTutorialService {
     private static final long POLL_INTERVAL_SECONDS = 1L;
-    private static final double FARM_MIN_X = -862.0;
-    private static final double FARM_MAX_X = -842.0;
-    private static final double FARM_MIN_Y = 70.0;
-    private static final double FARM_MAX_Y = 130.0;
-    private static final double FARM_MIN_Z = 132.0;
-    private static final double FARM_MAX_Z = 146.0;
+    private static final double FARM_MIN_X = -870.0;
+    private static final double FARM_MAX_X = -830.0;
+    private static final double FARM_MIN_Z = 104.0;
+    private static final double FARM_MAX_Z = 128.5;
     private static final TutorialViewModel EMPTY_VIEW_MODEL = new TutorialState(Instant.EPOCH).viewModel();
 
     private final DemoSessionRegistry registry;
@@ -380,8 +378,6 @@ public final class AhDemoTutorialService {
         return position != null
                 && position.x >= FARM_MIN_X
                 && position.x <= FARM_MAX_X
-                && position.y >= FARM_MIN_Y
-                && position.y <= FARM_MAX_Y
                 && position.z >= FARM_MIN_Z
                 && position.z <= FARM_MAX_Z;
     }
