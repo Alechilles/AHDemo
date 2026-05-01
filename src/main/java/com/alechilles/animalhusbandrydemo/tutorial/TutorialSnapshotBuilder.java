@@ -52,7 +52,7 @@ public final class TutorialSnapshotBuilder {
                 tamedLivestock,
                 tamedPredators,
                 commandLinked,
-                commandLinked,
+                false,
                 careInteracted,
                 breedingTriggered,
                 offspringOrGrowth

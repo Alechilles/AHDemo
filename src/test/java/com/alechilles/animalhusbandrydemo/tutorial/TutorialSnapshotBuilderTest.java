@@ -20,7 +20,7 @@ final class TutorialSnapshotBuilderTest {
         assertTrue(snapshot.tamedLivestock() == 1);
         assertTrue(snapshot.tamedPredators() == 1);
         assertTrue(snapshot.commandLinked());
-        assertTrue(snapshot.commandTried());
+        assertFalse(snapshot.commandTried());
         assertTrue(snapshot.breedingTriggered());
         assertTrue(snapshot.offspringOrGrowth());
     }

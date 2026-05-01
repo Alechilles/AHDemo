@@ -23,36 +23,47 @@ public final class TutorialState {
 
     public boolean update(@Nonnull TutorialSnapshot snapshot, @Nonnull Instant now) {
         boolean changed = false;
-        if (Duration.between(moduleStartedAt, now).compareTo(INTRO_DWELL) >= 0) {
-            changed |= complete(TutorialTaskId.INTRO_READY);
-        }
-        if (snapshot.tamedLivestock() > 0) {
-            changed |= complete(TutorialTaskId.TAME_LIVESTOCK);
-        }
-        if (snapshot.commandLinked()) {
-            changed |= complete(TutorialTaskId.COMMAND_LINK);
-            changed |= complete(TutorialTaskId.COMMAND_TRY);
-        }
-        if (snapshot.commandTried()) {
-            changed |= complete(TutorialTaskId.COMMAND_TRY);
-        }
-        if (snapshot.careInteracted()) {
-            changed |= complete(TutorialTaskId.CARE_INTERACT);
-        }
-        if (snapshot.hasLivestockPair()) {
-            changed |= complete(TutorialTaskId.TAME_PAIR);
-        }
-        if (snapshot.breedingTriggered()) {
-            changed |= complete(TutorialTaskId.BREEDING_TRIGGERED);
-        }
-        if (snapshot.offspringOrGrowth()) {
-            changed |= complete(TutorialTaskId.OFFSPRING_OR_GROWTH);
-        }
-        if (snapshot.tamedPredators() > 0) {
-            changed |= complete(TutorialTaskId.TAME_PREDATOR);
-        }
-        if (currentModule() == TutorialModule.FINISH) {
-            changed |= complete(TutorialTaskId.FINISH_READY);
+        switch (currentModule()) {
+            case INTRO -> {
+                if (Duration.between(moduleStartedAt, now).compareTo(INTRO_DWELL) >= 0) {
+                    changed |= complete(TutorialTaskId.INTRO_READY);
+                }
+            }
+            case TAME_LIVESTOCK -> {
+                if (snapshot.tamedLivestock() > 0) {
+                    changed |= complete(TutorialTaskId.TAME_LIVESTOCK);
+                }
+            }
+            case COMMAND_TOOLS -> {
+                if (snapshot.commandLinked()) {
+                    changed |= complete(TutorialTaskId.COMMAND_LINK);
+                }
+                if (snapshot.commandTried()) {
+                    changed |= complete(TutorialTaskId.COMMAND_TRY);
+                }
+            }
+            case CARE -> {
+                if (snapshot.careInteracted()) {
+                    changed |= complete(TutorialTaskId.CARE_INTERACT);
+                }
+            }
+            case BREEDING -> {
+                if (snapshot.hasLivestockPair()) {
+                    changed |= complete(TutorialTaskId.TAME_PAIR);
+                }
+                if (snapshot.breedingTriggered()) {
+                    changed |= complete(TutorialTaskId.BREEDING_TRIGGERED);
+                }
+                if (snapshot.offspringOrGrowth()) {
+                    changed |= complete(TutorialTaskId.OFFSPRING_OR_GROWTH);
+                }
+            }
+            case PREDATOR_TAMING -> {
+                if (snapshot.tamedPredators() > 0) {
+                    changed |= complete(TutorialTaskId.TAME_PREDATOR);
+                }
+            }
+            case FINISH -> changed |= complete(TutorialTaskId.FINISH_READY);
         }
         if (autoAdvance(now)) {
             changed = true;

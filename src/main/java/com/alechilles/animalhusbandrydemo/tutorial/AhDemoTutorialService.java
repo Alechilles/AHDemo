@@ -147,6 +147,7 @@ public final class AhDemoTutorialService {
         }
         synchronized (runtime) {
             Instant now = Instant.now();
+            int previousModuleIndex = runtime.state.getModuleIndex();
             switch (action) {
                 case "Previous" -> runtime.state.previous(now);
                 case "Next" -> runtime.state.next(now);
@@ -158,6 +159,9 @@ public final class AhDemoTutorialService {
                 default -> {
                     return;
                 }
+            }
+            if (runtime.state.getModuleIndex() != previousModuleIndex) {
+                runtime.builder.reset();
             }
         }
         refreshSessionHud(playerUuid);
@@ -220,7 +224,11 @@ public final class AhDemoTutorialService {
         TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), runtime);
         boolean changed;
         synchronized (runtime) {
+            int previousModuleIndex = runtime.state.getModuleIndex();
             changed = runtime.state.update(snapshot, Instant.now());
+            if (runtime.state.getModuleIndex() != previousModuleIndex) {
+                runtime.builder.reset();
+            }
         }
         Player player = resolvePlayer(world, session.getPlayerUuid());
         if (player != null && (changed || runtime.isDirty())) {
