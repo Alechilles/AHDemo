@@ -32,7 +32,9 @@ public final class DemoSessionService {
     public static final Duration WORLD_EMPTY_GRACE = Duration.ofSeconds(10);
 
     private static final Transform INSTANCE_ENTRY = new Transform(-849.48, 123.45, 130.13, 0.0f, 0.0f, 0.0f);
-    private static final long AUTO_START_DELAY_SECONDS = 1L;
+    private static final int AUTO_START_MAX_ATTEMPTS = 30;
+    private static final long AUTO_START_INITIAL_DELAY_SECONDS = 1L;
+    private static final long AUTO_START_RETRY_DELAY_SECONDS = 1L;
     private static final long INSTANCE_SEED_DELAY_SECONDS = 3L;
 
     private final DemoLoadoutService loadoutService;
@@ -41,6 +43,7 @@ public final class DemoSessionService {
     private final DemoSessionRegistry registry = new DemoSessionRegistry();
     private final AhDemoTutorialService tutorialService;
     private final Map<UUID, Instant> emptySince = new ConcurrentHashMap<>();
+    private final Map<UUID, Boolean> pendingAutoStarts = new ConcurrentHashMap<>();
     private ScheduledFuture<?> maintenanceTask;
 
     public DemoSessionService(@Nonnull DemoLoadoutService loadoutService,
@@ -75,6 +78,7 @@ public final class DemoSessionService {
             requestInstanceRemoval(session);
         }
         registry.clear();
+        pendingAutoStarts.clear();
         emptySince.clear();
     }
 
@@ -233,29 +237,85 @@ public final class DemoSessionService {
         if (playerUuid == null || registry.get(playerUuid) != null || registry.isStarting(playerUuid)) {
             return;
         }
-        HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
-            if (!originWorld.isAlive()) {
-                return;
-            }
-            originWorld.execute(() -> autoStart(playerUuid, playerRef, originWorld));
-        }, AUTO_START_DELAY_SECONDS, TimeUnit.SECONDS);
-    }
-
-    private void autoStart(@Nonnull UUID playerUuid, @Nonnull PlayerRef playerRef, @Nonnull World originWorld) {
-        if (registry.get(playerUuid) != null || registry.isStarting(playerUuid)) {
+        if (pendingAutoStarts.putIfAbsent(playerUuid, Boolean.TRUE) != null) {
             return;
         }
-        Ref<EntityStore> playerEntityRef = originWorld.getEntityRef(playerUuid);
-        if (playerEntityRef == null || !playerEntityRef.isValid() || !playerRef.isValid()) {
+        scheduleAutoStartAttempt(playerUuid, playerRef, originWorld, 1, AUTO_START_INITIAL_DELAY_SECONDS);
+    }
+
+    private void scheduleAutoStartAttempt(@Nonnull UUID playerUuid,
+                                          @Nonnull PlayerRef playerRef,
+                                          @Nonnull World fallbackWorld,
+                                          int attempt,
+                                          long delaySeconds) {
+        HytaleServer.SCHEDULED_EXECUTOR.schedule(() -> {
+            if (!pendingAutoStarts.containsKey(playerUuid)) {
+                return;
+            }
+            World currentWorld = resolveCurrentWorld(playerRef, fallbackWorld);
+            if (currentWorld == null || !currentWorld.isAlive()) {
+                finishOrRetryAutoStart(playerUuid, playerRef, fallbackWorld, attempt, AutoStartResult.RETRY);
+                return;
+            }
+            currentWorld.execute(() -> {
+                if (!pendingAutoStarts.containsKey(playerUuid)) {
+                    return;
+                }
+                AutoStartResult result = autoStart(playerUuid, playerRef, currentWorld);
+                finishOrRetryAutoStart(playerUuid, playerRef, currentWorld, attempt, result);
+            });
+        }, delaySeconds, TimeUnit.SECONDS);
+    }
+
+    private void finishOrRetryAutoStart(@Nonnull UUID playerUuid,
+                                        @Nonnull PlayerRef playerRef,
+                                        @Nonnull World fallbackWorld,
+                                        int attempt,
+                                        @Nonnull AutoStartResult result) {
+        if (!pendingAutoStarts.containsKey(playerUuid)) {
             return;
+        }
+        if (result == AutoStartResult.RETRY && attempt < AUTO_START_MAX_ATTEMPTS) {
+            scheduleAutoStartAttempt(playerUuid, playerRef, fallbackWorld, attempt + 1, AUTO_START_RETRY_DELAY_SECONDS);
+            return;
+        }
+        if (result == AutoStartResult.RETRY) {
+            logger.at(Level.WARNING).log(
+                    "Unable to auto-start Animal Husbandry demo for %s after %s attempts; player was not ready.",
+                    playerUuid,
+                    attempt
+            );
+        }
+        pendingAutoStarts.remove(playerUuid);
+    }
+
+    @Nullable
+    private World resolveCurrentWorld(@Nonnull PlayerRef playerRef, @Nonnull World fallbackWorld) {
+        UUID currentWorldUuid = playerRef.getWorldUuid();
+        Universe universe = Universe.get();
+        World currentWorld = universe != null && currentWorldUuid != null ? universe.getWorld(currentWorldUuid) : null;
+        return currentWorld != null ? currentWorld : fallbackWorld;
+    }
+
+    private AutoStartResult autoStart(@Nonnull UUID playerUuid, @Nonnull PlayerRef playerRef, @Nonnull World originWorld) {
+        if (registry.get(playerUuid) != null || registry.isStarting(playerUuid)) {
+            return AutoStartResult.COMPLETE;
+        }
+        if (!playerRef.isValid()) {
+            return AutoStartResult.COMPLETE;
+        }
+        Ref<EntityStore> playerEntityRef = originWorld.getEntityRef(playerUuid);
+        if (playerEntityRef == null || !playerEntityRef.isValid()) {
+            return AutoStartResult.RETRY;
         }
         Store<EntityStore> store = originWorld.getEntityStore().getStore();
         Player player = store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            return;
+            return AutoStartResult.RETRY;
         }
         startDemo(player, store, playerEntityRef, playerRef, originWorld, message ->
                 logger.at(Level.FINE).log("Auto-start Animal Husbandry demo for %s: %s", playerUuid, message));
+        return AutoStartResult.COMPLETE;
     }
 
     public void openTutorialGuide(@Nonnull Player player,
@@ -288,6 +348,9 @@ public final class DemoSessionService {
 
     public void cleanupDisconnect(@Nonnull PlayerRef playerRef) {
         UUID playerUuid = playerRef.getUuid();
+        if (playerUuid != null) {
+            pendingAutoStarts.remove(playerUuid);
+        }
         DemoSession session = playerUuid != null ? registry.remove(playerUuid) : null;
         if (session != null) {
             tutorialService.endSession(session);
@@ -426,6 +489,11 @@ public final class DemoSessionService {
 
     public int activeSessionCount() {
         return registry.activeCount();
+    }
+
+    private enum AutoStartResult {
+        COMPLETE,
+        RETRY
     }
 
     @FunctionalInterface
