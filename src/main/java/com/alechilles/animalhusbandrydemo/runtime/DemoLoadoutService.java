@@ -121,7 +121,7 @@ public final class DemoLoadoutService {
     }
 
     public boolean hasStash(@Nonnull UUID playerUuid) {
-        return stashes.containsKey(playerUuid) || Files.exists(stashPath(playerUuid));
+        return stashes.containsKey(playerUuid);
     }
 
     public int clear(@Nullable Player player) {
@@ -143,6 +143,7 @@ public final class DemoLoadoutService {
         if (hasStash(playerUuid)) {
             return true;
         }
+        discardStaleStashFile(playerUuid);
         if (player.getInventory() == null) {
             return false;
         }
@@ -156,6 +157,25 @@ public final class DemoLoadoutService {
             stashes.remove(playerUuid);
             logger.at(Level.SEVERE).withCause(e).log("Failed to stash Animal Husbandry demo inventory for %s", playerUuid);
             return false;
+        }
+    }
+
+    private void discardStaleStashFile(@Nonnull UUID playerUuid) {
+        Path path = stashPath(playerUuid);
+        if (!Files.exists(path)) {
+            return;
+        }
+        try {
+            Files.delete(path);
+            logger.at(Level.WARNING).log(
+                    "Discarded stale Animal Husbandry demo inventory stash before creating a fresh stash for %s",
+                    playerUuid
+            );
+        } catch (IOException e) {
+            logger.at(Level.WARNING).withCause(e).log(
+                    "Failed to discard stale Animal Husbandry demo inventory stash for %s",
+                    playerUuid
+            );
         }
     }
 

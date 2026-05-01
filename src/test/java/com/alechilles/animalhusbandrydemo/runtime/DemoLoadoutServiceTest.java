@@ -2,9 +2,13 @@ package com.alechilles.animalhusbandrydemo.runtime;
 
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.SimpleItemContainer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.UUID;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,6 +62,16 @@ final class DemoLoadoutServiceTest {
                 DemoLoadoutService.METADATA_KEY,
                 com.hypixel.hytale.codec.Codec.STRING
         ));
+    }
+
+    @Test
+    void staleDiskStashDoesNotCountAsActiveStash(@TempDir Path tempDir) throws Exception {
+        UUID playerUuid = UUID.randomUUID();
+        Files.writeString(tempDir.resolve(playerUuid + ".json"), new BsonDocument().toJson());
+
+        DemoLoadoutService loadoutService = new DemoLoadoutService(tempDir, null);
+
+        assertFalse(loadoutService.hasStash(playerUuid));
     }
 
     private static BsonDocument metadata(String value) {
