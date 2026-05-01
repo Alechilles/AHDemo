@@ -6,8 +6,8 @@ import javax.annotation.Nonnull;
 public enum TutorialModule {
     INTRO(
             "Welcome",
-            "Take a look around the private farm. This guide will follow your progress.",
-            List.of(new TutorialTask(TutorialTaskId.INTRO_READY, "Arrive in your private demo farm."))
+            "Walk through the entrance and step into the fenced farm area.",
+            List.of(new TutorialTask(TutorialTaskId.INTRO_READY, "Enter the fenced farm."))
     ),
     TAME_LIVESTOCK(
             "Tame Livestock",

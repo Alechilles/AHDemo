@@ -14,11 +14,16 @@ public final class TutorialSnapshotBuilder {
 
     @Nonnull
     public TutorialSnapshot build(@Nonnull Iterable<NpcObservation> observations) {
-        return build(observations, false);
+        return build(observations, false, false);
     }
 
     @Nonnull
     public TutorialSnapshot build(@Nonnull Iterable<NpcObservation> observations, boolean commandTried) {
+        return build(observations, commandTried, false);
+    }
+
+    @Nonnull
+    public TutorialSnapshot build(@Nonnull Iterable<NpcObservation> observations, boolean commandTried, boolean enteredFarm) {
         int tamedLivestock = 0;
         int tamedPredators = 0;
         boolean commandLinked = false;
@@ -56,6 +61,7 @@ public final class TutorialSnapshotBuilder {
         previousCareState.clear();
         previousCareState.putAll(nextCareState);
         return new TutorialSnapshot(
+                enteredFarm,
                 tamedLivestock,
                 tamedPredators,
                 commandLinked,

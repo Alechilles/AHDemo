@@ -1,6 +1,5 @@
 package com.alechilles.animalhusbandrydemo.tutorial;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
@@ -8,8 +7,6 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 public final class TutorialState {
-    private static final Duration INTRO_DWELL = Duration.ofSeconds(5);
-
     private final EnumSet<TutorialTaskId> completedTasks = EnumSet.noneOf(TutorialTaskId.class);
     private int moduleIndex;
     private boolean hudHidden;
@@ -25,7 +22,7 @@ public final class TutorialState {
         boolean changed = false;
         switch (currentModule()) {
             case INTRO -> {
-                if (Duration.between(moduleStartedAt, now).compareTo(INTRO_DWELL) >= 0) {
+                if (snapshot.enteredFarm()) {
                     changed |= complete(TutorialTaskId.INTRO_READY);
                 }
             }

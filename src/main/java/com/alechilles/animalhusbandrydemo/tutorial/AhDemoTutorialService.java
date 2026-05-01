@@ -27,12 +27,14 @@ import com.hypixel.hytale.server.core.entity.entities.player.hud.HudManager;
 import com.hypixel.hytale.server.core.inventory.Inventory;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
+import com.hypixel.hytale.math.vector.Vector3d;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -49,6 +51,12 @@ import javax.annotation.Nullable;
 
 public final class AhDemoTutorialService {
     private static final long POLL_INTERVAL_SECONDS = 1L;
+    private static final double FARM_MIN_X = -862.0;
+    private static final double FARM_MAX_X = -842.0;
+    private static final double FARM_MIN_Y = 70.0;
+    private static final double FARM_MAX_Y = 130.0;
+    private static final double FARM_MIN_Z = 132.0;
+    private static final double FARM_MAX_Z = 146.0;
     private static final TutorialViewModel EMPTY_VIEW_MODEL = new TutorialState(Instant.EPOCH).viewModel();
 
     private final DemoSessionRegistry registry;
@@ -232,12 +240,16 @@ public final class AhDemoTutorialService {
     private void pollSession(@Nonnull DemoSession session, @Nonnull World world) {
         RuntimeState runtime = runtimeByPlayer.computeIfAbsent(session.getPlayerUuid(), ignored -> new RuntimeState(Instant.now()));
         Store<EntityStore> store = world.getEntityStore().getStore();
-        Player player = resolvePlayer(world, session.getPlayerUuid());
+        Ref<EntityStore> playerEntityRef = world.getEntityRef(session.getPlayerUuid());
+        if (playerEntityRef == null || !playerEntityRef.isValid()) {
+            return;
+        }
+        Player player = store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
             return;
         }
         Instant now = Instant.now();
-        TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), player, runtime);
+        TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), player, playerEntityRef, runtime);
         boolean changed;
         synchronized (runtime) {
             runtime.markPlayerVisible(now);
@@ -326,13 +338,15 @@ public final class AhDemoTutorialService {
     private TutorialSnapshot collectSnapshot(@Nonnull Store<EntityStore> store,
                                              @Nonnull UUID playerUuid,
                                              @Nullable Player player,
+                                             @Nonnull Ref<EntityStore> playerEntityRef,
                                              @Nonnull RuntimeState runtime) {
         ArrayList<TutorialSnapshotBuilder.NpcObservation> observations = new ArrayList<>();
         boolean commandTried = hasSelectedDemoCommand(player);
+        boolean enteredFarm = isInsideFarm(store, playerEntityRef);
         ComponentType<EntityStore, TameworkOwnerComponent> ownerType = TameworkOwnerComponent.getComponentType();
         ComponentType<EntityStore, TameworkTamedComponent> tamedType = TameworkTamedComponent.getComponentType();
         if (ownerType == null || tamedType == null) {
-            return new TutorialSnapshot(0, 0, false, commandTried, false, false, false);
+            return new TutorialSnapshot(enteredFarm, 0, 0, false, commandTried, false, false, false);
         }
         ComponentType<EntityStore, TameworkCommandLinksComponent> commandLinksType = TameworkCommandLinksComponent.getComponentType();
         ComponentType<EntityStore, TameworkNeedsComponent> needsType = TameworkNeedsComponent.getComponentType();
@@ -352,8 +366,24 @@ public final class AhDemoTutorialService {
                 lifeStageType
         ));
         synchronized (runtime) {
-            return runtime.builder.build(observations, commandTried);
+            return runtime.builder.build(observations, commandTried, enteredFarm);
         }
+    }
+
+    private boolean isInsideFarm(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> playerEntityRef) {
+        TransformComponent transform = store.getComponent(playerEntityRef, TransformComponent.getComponentType());
+        Vector3d position = transform != null ? transform.getPosition() : null;
+        return isInsideFarm(position);
+    }
+
+    static boolean isInsideFarm(@Nullable Vector3d position) {
+        return position != null
+                && position.x >= FARM_MIN_X
+                && position.x <= FARM_MAX_X
+                && position.y >= FARM_MIN_Y
+                && position.y <= FARM_MAX_Y
+                && position.z >= FARM_MIN_Z
+                && position.z <= FARM_MAX_Z;
     }
 
     private boolean hasSelectedDemoCommand(@Nullable Player player) {
