@@ -35,7 +35,9 @@ import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -416,7 +418,7 @@ public final class AhDemoTutorialService {
                     commandLinks != null && playerUuid.equals(commandLinks.getOwnerId()) && commandLinks.getToolIds().length > 0,
                     needs != null ? needs.getHunger() : null,
                     needs != null ? needs.getThirst() : null,
-                    happiness != null ? happiness.getValue() : null,
+                    feedImpulseSignatures(happiness),
                     breeding != null && (breeding.getLastPartnerUuid() != null
                             || breeding.getCooldownDurationMs() > 0L
                             || breeding.getCooldownStartedAtMs() > 0L
@@ -424,6 +426,21 @@ public final class AhDemoTutorialService {
                     isOffspringOrGrowth(lifeStage)
             ));
         }
+    }
+
+    @Nonnull
+    private Set<String> feedImpulseSignatures(@Nullable TameworkHappinessComponent happiness) {
+        HashSet<String> signatures = new HashSet<>();
+        if (happiness == null) {
+            return signatures;
+        }
+        for (TameworkHappinessComponent.ActiveImpulse impulse : happiness.getActiveImpulses()) {
+            if (impulse == null || impulse.getKey() == null || !impulse.getKey().startsWith("feed:")) {
+                continue;
+            }
+            signatures.add(impulse.getKey() + "|" + impulse.getExpiresAtMs() + "|" + impulse.getItemId());
+        }
+        return signatures;
     }
 
     @Nullable

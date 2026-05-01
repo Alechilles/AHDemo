@@ -1,8 +1,10 @@
 package com.alechilles.animalhusbandrydemo.tutorial;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -42,7 +44,7 @@ public final class TutorialSnapshotBuilder {
             NpcCareState currentCare = new NpcCareState(
                     observation.hunger(),
                     observation.thirst(),
-                    observation.happiness()
+                    observation.feedImpulseSignatures()
             );
             if (observation.npcUuid() != null) {
                 NpcCareState previous = previousCareState.get(observation.npcUuid());
@@ -102,13 +104,22 @@ public final class TutorialSnapshotBuilder {
                                  boolean commandLinked,
                                  @Nullable Double hunger,
                                  @Nullable Double thirst,
-                                 @Nullable Double happiness,
+                                 @Nonnull Set<String> feedImpulseSignatures,
                                  boolean breedingTriggered,
                                  boolean offspringOrGrowth) {
+        public NpcObservation {
+            feedImpulseSignatures = Set.copyOf(feedImpulseSignatures);
+        }
     }
 
-    private record NpcCareState(@Nullable Double hunger, @Nullable Double thirst, @Nullable Double happiness) {
+    private record NpcCareState(@Nullable Double hunger,
+                                @Nullable Double thirst,
+                                @Nonnull Set<String> feedImpulseSignatures) {
         private static final double IMPROVEMENT_EPSILON = 0.001;
+
+        private NpcCareState {
+            feedImpulseSignatures = Set.copyOf(feedImpulseSignatures);
+        }
 
         boolean improvedOver(@Nullable NpcCareState previous) {
             if (previous == null) {
@@ -116,11 +127,17 @@ public final class TutorialSnapshotBuilder {
             }
             return improved(hunger, previous.hunger)
                     || improved(thirst, previous.thirst)
-                    || improved(happiness, previous.happiness);
+                    || hasNewFeedImpulse(previous);
         }
 
         private static boolean improved(@Nullable Double current, @Nullable Double previous) {
             return current != null && previous != null && current > previous + IMPROVEMENT_EPSILON;
+        }
+
+        private boolean hasNewFeedImpulse(@Nonnull NpcCareState previous) {
+            HashSet<String> newImpulses = new HashSet<>(feedImpulseSignatures);
+            newImpulses.removeAll(previous.feedImpulseSignatures);
+            return !newImpulses.isEmpty();
         }
     }
 }
