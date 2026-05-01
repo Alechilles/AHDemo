@@ -29,7 +29,7 @@ public final class AlecsAnimalHusbandryDemo extends JavaPlugin {
 
     @Override
     protected void setup() {
-        loadoutService = new DemoLoadoutService();
+        loadoutService = new DemoLoadoutService(getDataDirectory().resolve("inventory-stashes"), getLogger());
         worldSeeder = new DemoWorldSeeder(getLogger());
         sessionService = new DemoSessionService(loadoutService, worldSeeder, getLogger());
 

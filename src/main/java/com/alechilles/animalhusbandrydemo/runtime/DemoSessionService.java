@@ -103,11 +103,15 @@ public final class DemoSessionService {
         }
 
         Transform returnPoint = resolveReturnPoint(player);
-        loadoutService.grant(player, playerEntityRef, store);
+        if (!loadoutService.enterDemo(playerUuid, player, playerEntityRef, store)) {
+            registry.clearStarting(playerUuid);
+            sink.send("Unable to start demo: failed to stash your current inventory.");
+            return;
+        }
         CompletableFuture<World> future = spawnInstance(originWorld, returnPoint, playerUuid, sink);
         if (future == null) {
             registry.clearStarting(playerUuid);
-            loadoutService.clear(player);
+            loadoutService.restoreOriginalInventory(playerUuid, player, playerEntityRef, store, true);
             return;
         }
 
@@ -116,7 +120,7 @@ public final class DemoSessionService {
             registry.clearStarting(playerUuid);
             if (throwable != null || instanceWorld == null) {
                 log(Level.SEVERE, throwable, "Failed to start Animal Husbandry demo for %s", playerUuid);
-                clearLoadout(originWorld, player);
+                restoreOriginalInventory(originWorld, playerUuid, player, playerEntityRef, store);
                 sink.send("Unable to start the Animal Husbandry demo instance.");
                 return;
             }
@@ -154,9 +158,9 @@ public final class DemoSessionService {
             tutorialService.endSession(session);
         }
         tutorialService.cleanupHud(player);
-        loadoutService.clear(player);
+        loadoutService.restoreOriginalInventory(playerUuid, player, playerEntityRef, store, session != null);
         if (session == null) {
-            sink.send("No active Animal Husbandry demo session found. Demo items, if any, were cleared.");
+            sink.send("No active Animal Husbandry demo session found. Demo inventory, if any, was restored or cleared.");
             return;
         }
         CompletableFuture<Void> exit = InstancesPlugin.exitInstance(playerEntityRef, store);
@@ -195,11 +199,11 @@ public final class DemoSessionService {
 
         World originWorld = resolveOriginWorld(oldSession, currentWorld);
         Transform returnPoint = oldSession.getReturnPoint().clone();
-        loadoutService.grant(player, playerEntityRef, store);
+        loadoutService.resetDemoInventory(playerUuid, player, playerEntityRef, store);
         CompletableFuture<World> future = spawnInstance(originWorld, returnPoint, playerUuid, sink);
         if (future == null) {
             registry.clearStarting(playerUuid);
-            loadoutService.clear(player);
+            loadoutService.restoreOriginalInventory(playerUuid, player, playerEntityRef, store, true);
             requestInstanceRemoval(oldSession);
             return;
         }
@@ -355,13 +359,17 @@ public final class DemoSessionService {
         if (session != null) {
             tutorialService.endSession(session);
         }
-        cleanDisconnectedInventory(playerRef);
+        cleanDisconnectedInventory(playerRef, session != null);
         if (session != null) {
             requestInstanceRemoval(session);
         }
     }
 
-    private void cleanDisconnectedInventory(@Nonnull PlayerRef playerRef) {
+    private void cleanDisconnectedInventory(@Nonnull PlayerRef playerRef, boolean discardInventoryIfMissing) {
+        UUID playerUuid = playerRef.getUuid();
+        if (playerUuid == null) {
+            return;
+        }
         UUID worldUuid = playerRef.getWorldUuid();
         Ref<EntityStore> entityRef = playerRef.getReference();
         Universe universe = Universe.get();
@@ -375,7 +383,13 @@ public final class DemoSessionService {
             }
             try {
                 Player player = world.getEntityStore().getStore().getComponent(entityRef, Player.getComponentType());
-                loadoutService.clear(player);
+                loadoutService.restoreOriginalInventory(
+                        playerUuid,
+                        player,
+                        entityRef,
+                        world.getEntityStore().getStore(),
+                        discardInventoryIfMissing
+                );
             } catch (IllegalStateException ignored) {
                 logger.at(Level.FINE).log("Skipped Animal Husbandry demo inventory cleanup for invalid player reference.");
             }
@@ -438,8 +452,12 @@ public final class DemoSessionService {
         }
     }
 
-    private void clearLoadout(@Nonnull World world, @Nonnull Player player) {
-        world.execute(() -> loadoutService.clear(player));
+    private void restoreOriginalInventory(@Nonnull World world,
+                                          @Nonnull UUID playerUuid,
+                                          @Nonnull Player player,
+                                          @Nonnull Ref<EntityStore> playerEntityRef,
+                                          @Nonnull Store<EntityStore> store) {
+        world.execute(() -> loadoutService.restoreOriginalInventory(playerUuid, player, playerEntityRef, store, true));
     }
 
     private void log(@Nonnull Level level, @Nullable Throwable throwable, @Nonnull String message, Object... args) {
