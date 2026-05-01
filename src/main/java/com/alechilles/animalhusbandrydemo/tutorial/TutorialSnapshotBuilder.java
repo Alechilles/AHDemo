@@ -12,6 +12,11 @@ public final class TutorialSnapshotBuilder {
 
     @Nonnull
     public TutorialSnapshot build(@Nonnull Iterable<NpcObservation> observations) {
+        return build(observations, false);
+    }
+
+    @Nonnull
+    public TutorialSnapshot build(@Nonnull Iterable<NpcObservation> observations, boolean commandTried) {
         int tamedLivestock = 0;
         int tamedPredators = 0;
         boolean commandLinked = false;
@@ -52,7 +57,7 @@ public final class TutorialSnapshotBuilder {
                 tamedLivestock,
                 tamedPredators,
                 commandLinked,
-                false,
+                commandTried,
                 careInteracted,
                 breedingTriggered,
                 offspringOrGrowth

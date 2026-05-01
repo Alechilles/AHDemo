@@ -2,6 +2,7 @@ package com.alechilles.animalhusbandrydemo.tutorial;
 
 import com.alechilles.alecstamework.Tamework;
 import com.alechilles.alecstamework.api.NpcProfileChangedEvent;
+import com.alechilles.alecstamework.config.TameworkMetadataKeys;
 import com.alechilles.alecstamework.npc.components.TameworkBreedingComponent;
 import com.alechilles.alecstamework.npc.components.TameworkCommandLinksComponent;
 import com.alechilles.alecstamework.npc.components.TameworkHappinessComponent;
@@ -9,8 +10,10 @@ import com.alechilles.alecstamework.npc.components.TameworkLifeStageComponent;
 import com.alechilles.alecstamework.npc.components.TameworkNeedsComponent;
 import com.alechilles.alecstamework.npc.components.TameworkOwnerComponent;
 import com.alechilles.alecstamework.npc.components.TameworkTamedComponent;
+import com.alechilles.animalhusbandrydemo.runtime.DemoLoadoutService;
 import com.alechilles.animalhusbandrydemo.runtime.DemoSession;
 import com.alechilles.animalhusbandrydemo.runtime.DemoSessionRegistry;
+import com.hypixel.hytale.codec.Codec;
 import com.hypixel.hytale.component.ArchetypeChunk;
 import com.hypixel.hytale.component.CommandBuffer;
 import com.hypixel.hytale.component.ComponentType;
@@ -21,6 +24,9 @@ import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.hud.HudManager;
+import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
@@ -221,7 +227,8 @@ public final class AhDemoTutorialService {
     private void pollSession(@Nonnull DemoSession session, @Nonnull World world) {
         RuntimeState runtime = runtimeByPlayer.computeIfAbsent(session.getPlayerUuid(), ignored -> new RuntimeState(Instant.now()));
         Store<EntityStore> store = world.getEntityStore().getStore();
-        TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), runtime);
+        Player player = resolvePlayer(world, session.getPlayerUuid());
+        TutorialSnapshot snapshot = collectSnapshot(store, session.getPlayerUuid(), player, runtime);
         boolean changed;
         synchronized (runtime) {
             int previousModuleIndex = runtime.state.getModuleIndex();
@@ -230,7 +237,6 @@ public final class AhDemoTutorialService {
                 runtime.builder.reset();
             }
         }
-        Player player = resolvePlayer(world, session.getPlayerUuid());
         if (player != null && (changed || runtime.isDirty())) {
             refreshHud(player, player.getPlayerRef(), runtime);
         }
@@ -306,12 +312,14 @@ public final class AhDemoTutorialService {
     @Nonnull
     private TutorialSnapshot collectSnapshot(@Nonnull Store<EntityStore> store,
                                              @Nonnull UUID playerUuid,
+                                             @Nullable Player player,
                                              @Nonnull RuntimeState runtime) {
         ArrayList<TutorialSnapshotBuilder.NpcObservation> observations = new ArrayList<>();
+        boolean commandTried = hasSelectedDemoCommand(player);
         ComponentType<EntityStore, TameworkOwnerComponent> ownerType = TameworkOwnerComponent.getComponentType();
         ComponentType<EntityStore, TameworkTamedComponent> tamedType = TameworkTamedComponent.getComponentType();
         if (ownerType == null || tamedType == null) {
-            return TutorialSnapshot.empty();
+            return new TutorialSnapshot(0, 0, false, commandTried, false, false, false);
         }
         ComponentType<EntityStore, TameworkCommandLinksComponent> commandLinksType = TameworkCommandLinksComponent.getComponentType();
         ComponentType<EntityStore, TameworkNeedsComponent> needsType = TameworkNeedsComponent.getComponentType();
@@ -331,8 +339,41 @@ public final class AhDemoTutorialService {
                 lifeStageType
         ));
         synchronized (runtime) {
-            return runtime.builder.build(observations);
+            return runtime.builder.build(observations, commandTried);
         }
+    }
+
+    private boolean hasSelectedDemoCommand(@Nullable Player player) {
+        Inventory inventory = player != null ? player.getInventory() : null;
+        if (inventory == null) {
+            return false;
+        }
+        return hasSelectedDemoCommand(inventory.getHotbar())
+                || hasSelectedDemoCommand(inventory.getStorage())
+                || hasSelectedDemoCommand(inventory.getBackpack())
+                || hasSelectedDemoCommand(inventory.getUtility())
+                || hasSelectedDemoCommand(inventory.getTools());
+    }
+
+    private boolean hasSelectedDemoCommand(@Nullable ItemContainer container) {
+        if (container == null) {
+            return false;
+        }
+        final boolean[] found = { false };
+        container.forEach((slot, stack) -> {
+            if (!found[0] && isSelectedDemoCommand(stack)) {
+                found[0] = true;
+            }
+        });
+        return found[0];
+    }
+
+    private boolean isSelectedDemoCommand(@Nullable ItemStack stack) {
+        if (!DemoLoadoutService.shouldRemove(stack)) {
+            return false;
+        }
+        String selected = stack.getFromMetadataOrNull(TameworkMetadataKeys.COMMAND_SELECTED_ID, Codec.STRING);
+        return selected != null && !selected.isBlank();
     }
 
     private void collectChunkObservations(

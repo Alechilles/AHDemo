@@ -57,6 +57,15 @@ final class TutorialSnapshotBuilderTest {
         assertTrue(second.careInteracted());
     }
 
+    @Test
+    void carriesExternalCommandTriedSignal() {
+        TutorialSnapshotBuilder builder = new TutorialSnapshotBuilder();
+
+        TutorialSnapshot snapshot = builder.build(List.of(), true);
+
+        assertTrue(snapshot.commandTried());
+    }
+
     private static TutorialSnapshotBuilder.NpcObservation observation(String roleId,
                                                                       boolean ownedAndTamed,
                                                                       boolean commandLinked,
