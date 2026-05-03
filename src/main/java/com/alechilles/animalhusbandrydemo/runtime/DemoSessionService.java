@@ -1,5 +1,6 @@
 package com.alechilles.animalhusbandrydemo.runtime;
 
+import com.alechilles.alecstamework.api.TameworkProgressionTimeScales;
 import com.alechilles.animalhusbandrydemo.tutorial.AhDemoTutorialService;
 import com.hypixel.hytale.builtin.instances.InstancesPlugin;
 import com.hypixel.hytale.component.Ref;
@@ -30,6 +31,7 @@ public final class DemoSessionService {
     public static final String INSTANCE_ASSET = "AnimalHusbandry_DemoFarm";
     public static final Duration MAX_SESSION_LENGTH = Duration.ofHours(2);
     public static final Duration WORLD_EMPTY_GRACE = Duration.ofSeconds(10);
+    public static final double DEMO_PROGRESSION_TIME_SCALE = 30.0;
 
     private static final Transform INSTANCE_ENTRY = new Transform(-849.48, 123.45, 130.13, 0.0f, 0.0f, 0.0f);
     private static final int AUTO_START_MAX_ATTEMPTS = 30;
@@ -131,17 +133,21 @@ public final class DemoSessionService {
             }
             if (shuttingDown) {
                 restoreOriginalInventory(originWorld, playerUuid, player, playerEntityRef, store);
-                InstancesPlugin.safeRemoveInstance(instanceWorld.getWorldConfig().getUuid());
+                UUID instanceWorldUuid = instanceWorld.getWorldConfig().getUuid();
+                clearDemoProgressionTiming(instanceWorldUuid);
+                InstancesPlugin.safeRemoveInstance(instanceWorldUuid);
                 return;
             }
+            UUID instanceWorldUuid = instanceWorld.getWorldConfig().getUuid();
             DemoSession session = new DemoSession(
                     playerUuid,
-                    instanceWorld.getWorldConfig().getUuid(),
+                    instanceWorldUuid,
                     instanceWorld.getName(),
                     originWorld.getWorldConfig().getUuid(),
                     returnPoint,
                     Instant.now()
             );
+            registerDemoProgressionTiming(instanceWorldUuid);
             DemoSession previous = registry.put(session);
             if (previous != null) {
                 tutorialService.endSession(previous);
@@ -226,7 +232,9 @@ public final class DemoSessionService {
                 restoreOriginalInventory(currentWorld, playerUuid, player, playerEntityRef, store);
                 requestInstanceRemoval(oldSession);
                 if (instanceWorld != null) {
-                    InstancesPlugin.safeRemoveInstance(instanceWorld.getWorldConfig().getUuid());
+                    UUID instanceWorldUuid = instanceWorld.getWorldConfig().getUuid();
+                    clearDemoProgressionTiming(instanceWorldUuid);
+                    InstancesPlugin.safeRemoveInstance(instanceWorldUuid);
                 }
                 return;
             }
@@ -240,14 +248,16 @@ public final class DemoSessionService {
                 return;
             }
             requestInstanceRemoval(oldSession);
+            UUID instanceWorldUuid = instanceWorld.getWorldConfig().getUuid();
             DemoSession session = new DemoSession(
                     playerUuid,
-                    instanceWorld.getWorldConfig().getUuid(),
+                    instanceWorldUuid,
                     instanceWorld.getName(),
                     originWorld.getWorldConfig().getUuid(),
                     returnPoint,
                     Instant.now()
             );
+            registerDemoProgressionTiming(instanceWorldUuid);
             registry.put(session);
             tutorialService.startSession(session, instanceWorld);
             scheduleSeed(instanceWorld);
@@ -466,9 +476,22 @@ public final class DemoSessionService {
 
     private void requestInstanceRemoval(@Nonnull DemoSession session) {
         emptySince.remove(session.getInstanceWorldUuid());
+        clearDemoProgressionTiming(session);
         if (session.markRemovalRequested()) {
             InstancesPlugin.safeRemoveInstance(session.getInstanceWorldUuid());
         }
+    }
+
+    static void registerDemoProgressionTiming(@Nonnull UUID worldUuid) {
+        TameworkProgressionTimeScales.registerWorldScale(worldUuid, DEMO_PROGRESSION_TIME_SCALE);
+    }
+
+    static void clearDemoProgressionTiming(@Nullable UUID worldUuid) {
+        TameworkProgressionTimeScales.clearWorldScale(worldUuid);
+    }
+
+    private static void clearDemoProgressionTiming(@Nonnull DemoSession session) {
+        clearDemoProgressionTiming(session.getInstanceWorldUuid());
     }
 
     private void restoreTrackedInventory(@Nonnull DemoSession session) {
@@ -523,6 +546,7 @@ public final class DemoSessionService {
             if (world == null || !world.isAlive()) {
                 if (registry.remove(session.getPlayerUuid(), session)) {
                     tutorialService.endSession(session);
+                    clearDemoProgressionTiming(session);
                     emptySince.remove(session.getInstanceWorldUuid());
                 }
                 continue;

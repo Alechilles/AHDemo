@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class InstanceAssetTest {
     @Test
-    void demoInstanceAssetUsesAcceleratedGameTime() throws IOException {
+    void demoInstanceAssetUsesComfortableVisualTime() throws IOException {
         Path asset = Path.of(
                 "src",
                 "main",
@@ -23,8 +23,8 @@ final class InstanceAssetTest {
 
         String json = Files.readString(asset);
         assertTrue(json.contains("\"IsGameTimePaused\": false"));
-        assertTrue(json.contains("\"DaytimeDurationSeconds\": 105"));
-        assertTrue(json.contains("\"NighttimeDurationSeconds\": 15"));
+        assertFalse(json.contains("\"DaytimeDurationSeconds\""));
+        assertFalse(json.contains("\"NighttimeDurationSeconds\""));
         assertTrue(json.contains("\"X\": -849.48"));
         assertTrue(json.contains("\"Y\": 123.45"));
         assertTrue(json.contains("\"Z\": 130.13"));
@@ -41,7 +41,7 @@ final class InstanceAssetTest {
         String json = Files.readString(Path.of("src", "main", "resources", "manifest.json"));
 
         assertTrue(json.contains("\"Hytale:Instances\": \"*\""));
-        assertTrue(json.contains("\"Alechilles:Alec's Tamework!\": \"2.8.x\""));
+        assertTrue(json.contains("\"Alechilles:Alec's Tamework!\": \"2.9.x\""));
         assertFalse(json.contains("\"Alechilles:Alec's Animal Husbandry!\""));
     }
 }
