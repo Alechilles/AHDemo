@@ -1,5 +1,5 @@
 {
-  "$Comment": "Disposable Animal Husbandry demo farm. Visual world time stays comfortable; demo-only Animal Husbandry progression acceleration is registered at runtime.",
+  "$Comment": "Disposable Animal Husbandry demo farm. Visual world time stays comfortable; saved chunks are trimmed around the farm.",
   "RequiredPlugins": {},
   "ChunkStorage": {
     "Type": "Hytale"

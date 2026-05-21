@@ -25,6 +25,9 @@ final class InstanceAssetTest {
         assertTrue(json.contains("\"IsGameTimePaused\": false"));
         assertFalse(json.contains("\"DaytimeDurationSeconds\""));
         assertFalse(json.contains("\"NighttimeDurationSeconds\""));
+        assertTrue(json.contains("\"Type\": \"HytaleGenerator\""));
+        assertTrue(json.contains("\"WorldStructure\": \"Default_Flat\""));
+        assertFalse(json.contains("\"Type\": \"Void\""));
         assertTrue(json.contains("\"X\": -849.48"));
         assertTrue(json.contains("\"Y\": 123.45"));
         assertTrue(json.contains("\"Z\": 130.13"));
