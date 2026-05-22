@@ -24,6 +24,7 @@ final class InstanceAssetTest {
         String json = Files.readString(asset);
         assertTrue(json.contains("\"IsGameTimePaused\": false"));
         assertFalse(json.contains("\"DaytimeDurationSeconds\""));
+        assertTrue(json.contains("\"GameTime\": \"0001-01-01T12:00:00Z\""));
         assertFalse(json.contains("\"NighttimeDurationSeconds\""));
         assertTrue(json.contains("\"Type\": \"HytaleGenerator\""));
         assertTrue(json.contains("\"WorldStructure\": \"Default_Flat\""));
