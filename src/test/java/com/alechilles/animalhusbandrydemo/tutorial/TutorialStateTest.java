@@ -1,8 +1,8 @@
 package com.alechilles.animalhusbandrydemo.tutorial;
 
-import com.hypixel.hytale.math.vector.Vector3d;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
+import org.joml.Vector3d;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

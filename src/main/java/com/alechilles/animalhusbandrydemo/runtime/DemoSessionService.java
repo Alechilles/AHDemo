@@ -109,7 +109,7 @@ public final class DemoSessionService {
             return;
         }
 
-        Transform returnPoint = resolveReturnPoint(player);
+        Transform returnPoint = resolveReturnPoint(store, playerEntityRef);
         if (!loadoutService.enterDemo(playerUuid, player, playerEntityRef, store)) {
             registry.clearStarting(playerUuid);
             sink.send("Unable to start demo: failed to stash your current inventory.");
@@ -460,8 +460,8 @@ public final class DemoSessionService {
         return "ahdemo-" + playerUuid + "-" + nonce.toString().replace("-", "").substring(0, 12);
     }
 
-    private Transform resolveReturnPoint(@Nonnull Player player) {
-        TransformComponent transform = player.getTransformComponent();
+    private Transform resolveReturnPoint(@Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> playerEntityRef) {
+        TransformComponent transform = store.getComponent(playerEntityRef, TransformComponent.getComponentType());
         if (transform != null) {
             return transform.getTransform().clone();
         }

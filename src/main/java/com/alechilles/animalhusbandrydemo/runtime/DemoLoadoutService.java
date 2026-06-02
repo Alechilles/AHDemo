@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -283,20 +284,21 @@ public final class DemoLoadoutService {
                                  byte activeUtilitySlot,
                                  byte activeToolsSlot,
                                  Instant createdAt) {
+        private static final int INACTIVE_SLOT_INDEX = -1;
         private static final List<ContainerSpec> CONTAINERS = List.of(
-                new ContainerSpec("hotbar", Inventory.HOTBAR_SECTION_ID),
-                new ContainerSpec("storage", Inventory.STORAGE_SECTION_ID),
-                new ContainerSpec("backpack", Inventory.BACKPACK_SECTION_ID),
-                new ContainerSpec("utility", Inventory.UTILITY_SECTION_ID),
-                new ContainerSpec("tools", Inventory.TOOLS_SECTION_ID),
-                new ContainerSpec("armor", Inventory.ARMOR_SECTION_ID)
+                new ContainerSpec("hotbar", Inventory::getHotbar),
+                new ContainerSpec("storage", Inventory::getStorage),
+                new ContainerSpec("backpack", Inventory::getBackpack),
+                new ContainerSpec("utility", Inventory::getUtility),
+                new ContainerSpec("tools", Inventory::getTools),
+                new ContainerSpec("armor", Inventory::getArmor)
         );
 
         @Nonnull
         static DemoInventorySnapshot capture(@Nonnull Inventory inventory) {
             Map<String, ContainerSnapshot> containers = new LinkedHashMap<>();
             for (ContainerSpec spec : CONTAINERS) {
-                containers.put(spec.name(), ContainerSnapshot.capture(inventory.getSectionById(spec.sectionId())));
+                containers.put(spec.name(), ContainerSnapshot.capture(spec.container(inventory)));
             }
             return new DemoInventorySnapshot(
                     containers,
@@ -313,7 +315,7 @@ public final class DemoLoadoutService {
             for (ContainerSpec spec : CONTAINERS) {
                 ContainerSnapshot snapshot = containers.get(spec.name());
                 if (snapshot != null) {
-                    snapshot.restore(inventory.getSectionById(spec.sectionId()));
+                    snapshot.restore(spec.container(inventory));
                 }
             }
             if (playerRef != null && accessor != null) {
@@ -349,9 +351,9 @@ public final class DemoLoadoutService {
             }
             return new DemoInventorySnapshot(
                     containers,
-                    intValue(document, "activeHotbarSlot", Inventory.INACTIVE_SLOT_INDEX).byteValue(),
-                    intValue(document, "activeUtilitySlot", Inventory.INACTIVE_SLOT_INDEX).byteValue(),
-                    intValue(document, "activeToolsSlot", Inventory.INACTIVE_SLOT_INDEX).byteValue(),
+                    intValue(document, "activeHotbarSlot", INACTIVE_SLOT_INDEX).byteValue(),
+                    intValue(document, "activeUtilitySlot", INACTIVE_SLOT_INDEX).byteValue(),
+                    intValue(document, "activeToolsSlot", INACTIVE_SLOT_INDEX).byteValue(),
                     Instant.parse(document.getString("createdAt", new BsonString(Instant.now().toString())).getValue())
             );
         }
@@ -399,7 +401,11 @@ public final class DemoLoadoutService {
         }
     }
 
-    private record ContainerSpec(String name, int sectionId) {
+    private record ContainerSpec(String name, Function<Inventory, ItemContainer> accessor) {
+        @Nullable
+        private ItemContainer container(@Nonnull Inventory inventory) {
+            return accessor.apply(inventory);
+        }
     }
 
     @Nonnull

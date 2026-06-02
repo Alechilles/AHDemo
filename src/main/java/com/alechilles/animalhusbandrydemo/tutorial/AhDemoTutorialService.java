@@ -34,7 +34,6 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hypixel.hytale.server.npc.entities.NPCEntity;
-import com.hypixel.hytale.math.vector.Vector3d;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,6 +47,7 @@ import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.joml.Vector3d;
 
 public final class AhDemoTutorialService {
     private static final long POLL_INTERVAL_SECONDS = 1L;
@@ -308,7 +308,7 @@ public final class AhDemoTutorialService {
         if (hud == null) {
             hud = new AhDemoTutorialHud(playerRef, viewModel);
             hudByPlayer.put(player.getUuid(), hud);
-            player.getHudManager().setCustomHud(playerRef, hud);
+            player.getHudManager().addCustomHud(playerRef, hud);
             hud.show();
             return;
         }
@@ -320,7 +320,7 @@ public final class AhDemoTutorialService {
             return;
         }
         HudManager hudManager = player.getHudManager();
-        hudManager.setCustomHud(player.getPlayerRef(), null);
+        hudManager.removeCustomHud(player.getPlayerRef(), AhDemoTutorialHud.KEY);
     }
 
     @Nullable

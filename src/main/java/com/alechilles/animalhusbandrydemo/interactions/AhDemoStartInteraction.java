@@ -76,7 +76,7 @@ public final class AhDemoStartInteraction extends SimpleInteraction {
                     playerRef,
                     player.getPlayerRef(),
                     world,
-                    message -> player.sendMessage(Message.raw(message))
+                    message -> player.getPlayerRef().sendMessage(Message.raw(message))
             );
         });
 

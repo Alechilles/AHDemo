@@ -6,11 +6,12 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import javax.annotation.Nonnull;
 
 final class AhDemoTutorialHud extends CustomUIHud {
+    static final String KEY = "AhDemoTutorialHud";
     static final String UI_PATH = "AhDemoTutorialHud.ui";
     private TutorialViewModel viewModel;
 
     AhDemoTutorialHud(@Nonnull PlayerRef playerRef, @Nonnull TutorialViewModel viewModel) {
-        super(playerRef);
+        super(playerRef, KEY);
         this.viewModel = viewModel;
     }
 

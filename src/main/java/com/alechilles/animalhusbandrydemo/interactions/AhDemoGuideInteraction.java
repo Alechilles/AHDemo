@@ -72,7 +72,7 @@ public final class AhDemoGuideInteraction extends SimpleInteraction {
                 store,
                 playerRef,
                 player.getPlayerRef(),
-                message -> player.sendMessage(Message.raw(message))
+                message -> player.getPlayerRef().sendMessage(Message.raw(message))
         ));
 
         super.tick0(true, time, type, context, cooldownHandler);

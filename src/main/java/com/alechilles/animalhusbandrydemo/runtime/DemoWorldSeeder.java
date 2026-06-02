@@ -3,8 +3,7 @@ package com.alechilles.animalhusbandrydemo.runtime;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.logger.HytaleLogger;
-import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
+import com.hypixel.hytale.math.vector.Rotation3f;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.NPCPlugin;
@@ -15,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
+import org.joml.Vector3d;
 
 public final class DemoWorldSeeder {
     private final HytaleLogger logger;
@@ -67,7 +67,7 @@ public final class DemoWorldSeeder {
             double x = baseX + (i % 3) * 1.8;
             double z = baseZ + (i / 3) * 1.8;
             Vector3d position = new Vector3d(x + 0.5, 80.0, z + 0.5);
-            Vector3f rotation = new Vector3f(0.0f, 180.0f, 0.0f);
+            Rotation3f rotation = new Rotation3f(0.0f, 180.0f, 0.0f);
             Pair<Ref<EntityStore>, NPCEntity> spawned = npcPlugin.spawnEntity(store, roleIndex, position, rotation, null, null);
             if (spawned == null || spawned.first() == null) {
                 logger.at(Level.WARNING).log("Failed to spawn demo role '%s'.", roleId);

@@ -81,7 +81,8 @@ final class InstanceAssetTest {
         String json = Files.readString(Path.of("src", "main", "resources", "manifest.json"));
 
         assertTrue(json.contains("\"Hytale:Instances\": \"*\""));
-        assertTrue(json.contains("\"Alechilles:Alec's Tamework!\": \"2.11.x\""));
+        assertTrue(json.contains("\"Alechilles:Alec's Tamework!\": \"2.12.x\""));
+        assertTrue(json.contains("\"ServerVersion\": \"0.5.x\""));
         assertFalse(json.contains("\"Alechilles:Alec's Animal Husbandry!\""));
     }
 }
