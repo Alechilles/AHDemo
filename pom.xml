@@ -20,7 +20,7 @@
         <hytale.install.path.prerelease>C:/Users/22ale/AppData/Roaming/Hytale/install/pre-release/package/game/latest</hytale.install.path.prerelease>
         <hytale.install.path>${hytale.install.path.release}</hytale.install.path>
         <hytale.userdata.path>C:/Users/22ale/AppData/Roaming/Hytale/UserData</hytale.userdata.path>
-        <tamework.jar.path>${hytale.install.path}/Server/mods/Alec's Tamework! v2.12.2.jar</tamework.jar.path>
+        <tamework.version>2.x</tamework.version>
         <hytale.jdk.path>C:/Program Files/Eclipse Adoptium/jdk-25.0.1.8-hotspot</hytale.jdk.path>
         <hytale.server.jvm.args />
         <hytale.server.extra.args />
@@ -37,9 +37,7 @@
         <dependency>
             <groupId>com.alechilles</groupId>
             <artifactId>alecs-tamework</artifactId>
-            <version>2.12.2</version>
-            <scope>system</scope>
-            <systemPath>${tamework.jar.path}</systemPath>
+            <version>${tamework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
