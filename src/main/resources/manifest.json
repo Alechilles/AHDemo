@@ -16,7 +16,7 @@
   "ServerVersion": "0.5.x",
   "Dependencies": {
     "Hytale:Instances": "*",
-    "Alechilles:Alec's Tamework!": "2.12.x"
+    "Alechilles:Alec's Tamework!": "2.x"
   },
   "OptionalDependencies": {},
   "LoadBefore": {},
