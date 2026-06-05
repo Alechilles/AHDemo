@@ -14,11 +14,14 @@ import java.util.Locale;
 import javax.annotation.Nonnull;
 
 public final class AhDemoCommand extends AbstractPlayerCommand {
+    public static final String PERMISSION = "animalhusbandrydemo.command.ahdemo";
+
     private final DemoSessionService sessionService;
 
     public AhDemoCommand(@Nonnull DemoSessionService sessionService) {
         super("ahdemo", "Start, leave, reset, or inspect an Animal Husbandry demo instance.");
         this.sessionService = sessionService;
+        requirePermission(PERMISSION);
         setAllowsExtraArguments(true);
     }
 
